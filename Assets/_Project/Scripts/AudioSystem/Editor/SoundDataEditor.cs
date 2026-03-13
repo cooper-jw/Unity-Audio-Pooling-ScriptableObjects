@@ -2,7 +2,6 @@
 
 using System;
 using System.Linq;
-using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
@@ -18,7 +17,7 @@ namespace AudioSystem.Editors
 		private SerializedProperty _pitchProperty;
 
 		private Editor _settingsEditor;
-		private bool _unlockSettings = false;
+		private bool _unlockSettings;
 		
 		private AudioSource _previewSource;
 		private float _previewDistance = 10f;

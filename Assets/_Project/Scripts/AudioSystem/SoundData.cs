@@ -19,12 +19,7 @@ namespace AudioSystem
 				return null;
 			}
 
-			if (clips.Length == 1)
-			{
-				return clips[0];
-			}
-
-			return clips[Random.Range(0, clips.Length)];
+			return clips.Length == 1 ? clips[0] : clips[Random.Range(0, clips.Length)];
 		}
 	}
 }
