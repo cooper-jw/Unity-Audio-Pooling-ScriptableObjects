@@ -1,47 +1,57 @@
 using UnityEngine;
 
-namespace AudioSystem {
-    public class SoundBuilder {
-        readonly SoundManager soundManager;
-        Vector3 position = Vector3.zero;
-        bool randomPitch;
+namespace AudioSystem
+{
+	public class SoundBuilder
+	{
+		private readonly SoundManager _soundManager;
+		private Vector3 _position = Vector3.zero;
+		private bool _randomPitch;
 
-        public SoundBuilder(SoundManager soundManager) {
-            this.soundManager = soundManager;
-        }
+		public SoundBuilder(SoundManager soundManager)
+		{
+			_soundManager = soundManager;
+		}
 
-        public SoundBuilder WithPosition(Vector3 position) {
-            this.position = position;
-            return this;
-        }
+		public SoundBuilder WithPosition(Vector3 position)
+		{
+			_position = position;
+			return this;
+		}
 
-        public SoundBuilder WithRandomPitch() {
-            this.randomPitch = true;
-            return this;
-        }
+		public SoundBuilder WithRandomPitch()
+		{
+			_randomPitch = true;
+			return this;
+		}
 
-        public void Play(SoundData soundData) {
-            if (soundData == null) {
-                Debug.LogError("SoundData is null");
-                return;
-            }
-            
-            if (!soundManager.CanPlaySound(soundData)) return;
-            
-            SoundEmitter soundEmitter = soundManager.Get();
-            soundEmitter.Initialize(soundData);
-            soundEmitter.transform.position = position;
-            soundEmitter.transform.parent = soundManager.transform;
+		public void Play(SoundData soundData)
+		{
+			if (soundData == null)
+			{
+				Debug.LogError("SoundData is null");
+				return;
+			}
 
-            if (randomPitch) {
-                soundEmitter.WithRandomPitch();
-            }
+			if (soundData.settings == null)
+			{
+				Debug.LogError($"SoundData {soundData.name} settings is null", soundData);
+				return;
+			}
 
-            if (soundData.frequentSound) {
-                soundEmitter.Node = soundManager.FrequentSoundEmitters.AddLast(soundEmitter);
-            }
-            
-            soundEmitter.Play();
-        }
-    }
+			if (!_soundManager.CanPlaySound(soundData)) return;
+
+			SoundEmitter soundEmitter = _soundManager.Get();
+			soundEmitter.Initialize(soundData);
+			Transform transform = soundEmitter.transform;
+			transform.position = _position;
+			transform.parent = _soundManager.transform;
+
+			if (_randomPitch) soundEmitter.WithRandomPitch();
+
+			if (soundData.frequentSound) soundEmitter.Node = _soundManager.FrequentSoundEmitters.AddLast(soundEmitter);
+
+			soundEmitter.Play();
+		}
+	}
 }

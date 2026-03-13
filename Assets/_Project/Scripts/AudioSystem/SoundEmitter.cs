@@ -1,77 +1,112 @@
 using System.Collections;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using UnityEngine;
+using Utils.Extensions;
 using Random = UnityEngine.Random;
 
-namespace AudioSystem {
+namespace AudioSystem 
+{
     [RequireComponent(typeof(AudioSource))]
-    public class SoundEmitter : MonoBehaviour {
-        public SoundData Data { get; private set; }
+    public class SoundEmitter : MonoBehaviour 
+    {
+        public SoundData Data { [UsedImplicitly] get; private set; }
         public LinkedListNode<SoundEmitter> Node { get; set; }
 
-        AudioSource audioSource;
-        Coroutine playingCoroutine;
+        private AudioSource _audioSource;
+        private Coroutine _playingCoroutine;
 
-        void Awake() {
-            audioSource = gameObject.GetOrAdd<AudioSource>();
+        private void Awake()
+        {
+            _audioSource = gameObject.GetOrAdd<AudioSource>();
         }
 
-        public void Initialize(SoundData data) {
+        public void Initialize(SoundData data)
+        {
             Data = data;
-            audioSource.clip = data.clip;
-            audioSource.outputAudioMixerGroup = data.mixerGroup;
-            audioSource.loop = data.loop;
-            audioSource.playOnAwake = data.playOnAwake;
             
-            audioSource.mute = data.mute;
-            audioSource.bypassEffects = data.bypassEffects;
-            audioSource.bypassListenerEffects = data.bypassListenerEffects;
-            audioSource.bypassReverbZones = data.bypassReverbZones;
+            Debug.Assert(data != null, "Sound emitter data is null.", this);
+            Debug.Assert(data.settings != null, data.name + " settings is null.", data);
             
-            audioSource.priority = data.priority;
-            audioSource.volume = data.volume;
-            audioSource.pitch = data.pitch;
-            audioSource.panStereo = data.panStereo;
-            audioSource.spatialBlend = data.spatialBlend;
-            audioSource.reverbZoneMix = data.reverbZoneMix;
-            audioSource.dopplerLevel = data.dopplerLevel;
-            audioSource.spread = data.spread;
+            SoundDataSettings settings = data.settings;
+            AudioClip clip = data.GetClip();
             
-            audioSource.minDistance = data.minDistance;
-            audioSource.maxDistance = data.maxDistance;
+            Debug.Assert(clip != null, data.name + " clip is null.", this);
             
-            audioSource.ignoreListenerVolume = data.ignoreListenerVolume;
-            audioSource.ignoreListenerPause = data.ignoreListenerPause;
+            _audioSource.clip = data.GetClip();
+            _audioSource.volume = data.volume;
+            _audioSource.pitch = data.pitch;
             
-            audioSource.rolloffMode = data.rolloffMode;
+            _audioSource.playOnAwake = false;
+            
+            _audioSource.outputAudioMixerGroup = settings.mixerGroup;
+            _audioSource.loop = settings.loop;
+            
+            _audioSource.mute = settings.mute;
+            _audioSource.bypassEffects = settings.bypassEffects;
+            _audioSource.bypassListenerEffects = settings.bypassListenerEffects;
+            _audioSource.bypassReverbZones = settings.bypassReverbZones;
+
+            _audioSource.priority = settings.priority;
+            _audioSource.panStereo = settings.panStereo;
+            _audioSource.spatialBlend = settings.spatialBlend;
+            _audioSource.reverbZoneMix = settings.reverbZoneMix;
+            _audioSource.dopplerLevel = settings.dopplerLevel;
+            _audioSource.spread = settings.spread;
+
+            _audioSource.minDistance = settings.minDistance;
+            _audioSource.maxDistance = settings.maxDistance;
+
+            _audioSource.ignoreListenerVolume = settings.ignoreListenerVolume;
+            _audioSource.ignoreListenerPause = settings.ignoreListenerPause;
+
+            _audioSource.rolloffMode = settings.rolloffMode;
+
+            if (settings.rolloffMode != AudioRolloffMode.Custom) 
+                return;
+            
+            if (settings.customRolloffCurve is { length: > 0 })
+                _audioSource.SetCustomCurve(AudioSourceCurveType.CustomRolloff, settings.customRolloffCurve);
+
+            if (settings.spatialBlendCurve is { length: > 0 })
+                _audioSource.SetCustomCurve(AudioSourceCurveType.SpatialBlend, settings.spatialBlendCurve);
+
+            if (settings.reverbZoneMixCurve is { length: > 0 })
+                _audioSource.SetCustomCurve(AudioSourceCurveType.ReverbZoneMix, settings.reverbZoneMixCurve);
+
+            if (settings.spreadCurve is { length: > 0 })
+                _audioSource.SetCustomCurve(AudioSourceCurveType.Spread, settings.spreadCurve);
         }
 
-        public void Play() {
-            if (playingCoroutine != null) {
-                StopCoroutine(playingCoroutine);
-            }
-            
-            audioSource.Play();
-            playingCoroutine = StartCoroutine(WaitForSoundToEnd());
+        public void Play()
+        {
+            if (_playingCoroutine != null) StopCoroutine(_playingCoroutine);
+
+            _audioSource.Play();
+            _playingCoroutine = StartCoroutine(WaitForSoundToEnd());
         }
 
-        IEnumerator WaitForSoundToEnd() {
-            yield return new WaitWhile(() => audioSource.isPlaying);
+        private IEnumerator WaitForSoundToEnd()
+        {
+            yield return new WaitWhile(() => _audioSource.isPlaying);
             Stop();
         }
 
-        public void Stop() {
-            if (playingCoroutine != null) {
-                StopCoroutine(playingCoroutine);
-                playingCoroutine = null;
+        public void Stop()
+        {
+            if (_playingCoroutine != null)
+            {
+                StopCoroutine(_playingCoroutine);
+                _playingCoroutine = null;
             }
-            
-            audioSource.Stop();
+
+            _audioSource.Stop();
             SoundManager.Instance.ReturnToPool(this);
         }
 
-        public void WithRandomPitch(float min = -0.05f, float max = 0.05f) {
-            audioSource.pitch += Random.Range(min, max);
+        public void WithRandomPitch(float min = -0.05f, float max = 0.05f)
+        {
+            _audioSource.pitch += Random.Range(min, max);
         }
     }
 }
