@@ -75,7 +75,7 @@ namespace AudioSystem.Editors
 
 			_dummyAudioObject = new GameObject("DummyAudioSource_Preview")
 			{
-				hideFlags = HideFlags.HideInHierarchy
+				hideFlags = HideFlags.HideAndDontSave
 			};
 			_dummyAudioSource = _dummyAudioObject.AddComponent<AudioSource>();
 			
