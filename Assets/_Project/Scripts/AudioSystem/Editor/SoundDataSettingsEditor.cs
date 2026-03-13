@@ -235,7 +235,10 @@ namespace AudioSystem.Editors
 		
 		private void ResetToDefaults()
 		{
-			GameObject tempObj = new("TempAudioSource");
+			GameObject tempObj = new("TempAudioSource")
+			{
+				hideFlags = HideFlags.HideAndDontSave
+			};
 			AudioSource tempSource = tempObj.AddComponent<AudioSource>();
 
 			_mixerGroupProperty.objectReferenceValue = tempSource.outputAudioMixerGroup;
